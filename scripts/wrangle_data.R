@@ -16,10 +16,11 @@ files2 <- list.files("downloaded/pr")
 read_data <- function(.file, .type){
   
   filename <- paste0("downloaded/", .type, "/", .file)
-  districts <- excel_sheets(filename)
-  
+
   if (.type == "smd"){
     
+    districts <- excel_sheets(filename)
+
     out <- NULL
     
     for (i in seq_along(districts)){
@@ -55,36 +56,51 @@ read_data <- function(.file, .type){
       out <- bind_rows(out, data2)
       
     }
-
+    
     return(out)
     
     
   } else if (.type == "pr"){
     
-    data <- suppressMessages(read_excel(filename, sheet = districts[1]))
-    ncols <- ncol(data)
-    names(data) <- c("municipality", 1:(ncols - 1))
+    sheets <- data.frame(sheets = excel_sheets(filename)) %>% 
+      mutate(keep = str_detect(sheets, "都|道|府|県")) %>% 
+      filter(keep == 1) %>% 
+      pull(sheets)
     
-    location <- which(data$municipality == "市区町村名＼政党名")
+    out <- NULL
     
-    parties    <- data[location, 2:ncols]
-    
-    information <- data.frame(
-      parties   = data[location, 2:ncols] %>% t()
-    ) %>% 
-      mutate(id = row_number())
-    
-    out <- data %>% 
-      filter(row_number() > location) %>% 
-      mutate(across(.cols = everything(), .fns = as.character)) %>% 
-      pivot_longer(cols = all_of(2:ncols), names_to = "id", values_to = "votes") %>% 
-      mutate(id = as.numeric(id)) %>% 
-      left_join(information, by = "id") %>% 
-      select(-id) %>% 
-      filter(!is.na(votes) & !is.na(parties)) %>% 
-      mutate(votes = as.numeric(votes),
-             file = .file, 
-             district = districts[1])
+    for (i in seq_along(sheets)){
+      
+      data <- suppressMessages(read_excel(filename, sheet = sheets[i]))
+
+      ncols <- ncol(data)
+      names(data) <- c("municipality", 1:(ncols - 1))
+      
+      location <- which(data$municipality == "市区町村名＼政党名")
+      
+      parties    <- data[location, 2:ncols]
+      
+      information <- data.frame(
+        parties   = data[location, 2:ncols] %>% t()
+      ) %>% 
+        mutate(id = row_number())
+      
+      temp <- data %>% 
+        filter(row_number() > location) %>% 
+        mutate(across(.cols = everything(), .fns = as.character)) %>% 
+        pivot_longer(cols = all_of(2:ncols), names_to = "id", values_to = "votes") %>% 
+        mutate(id = as.numeric(id)) %>% 
+        left_join(information, by = "id") %>% 
+        select(-id) %>% 
+        filter(!is.na(votes) & !is.na(parties)) %>% 
+        mutate(votes = as.numeric(votes),
+               file = .file, 
+               prefecture = sheets[i])
+      
+      out <- bind_rows(out, temp)
+      
+    }
+
     
     return(out)
     
