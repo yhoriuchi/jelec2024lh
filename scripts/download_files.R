@@ -29,7 +29,7 @@ base_url <- "https://www.soumu.go.jp/senkyo/senkyo_s/data/shugiin50/"
 full_links <- ifelse(grepl("^http", links), links, paste0(base_url, links))
 
 # Further wrangling
-hyperlinks <- data.frame(url = hyperlink_vector, 
+hyperlinks <- data.frame(url = full_links, 
                          text = texts) %>% 
   filter(str_detect(url, "main_content") & text != "") %>% 
   mutate(url = str_remove(url, "senkyo/senkyo_s/data/shugiin50//"))
