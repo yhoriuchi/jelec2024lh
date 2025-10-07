@@ -48,7 +48,8 @@ read_data <- function(.file, .type){
         mutate(id = as.numeric(id)) %>% 
         left_join(information, by = "id") %>% 
         select(-id) %>% 
-        filter(!is.na(votes) & !is.na(parties)) %>% 
+        #filter(!is.na(votes) & !is.na(parties)) %>% 
+        filter(parties != "得票数計") %>%
         mutate(votes = as.numeric(votes),
                file = .file, 
                district = districts[i])
@@ -92,7 +93,8 @@ read_data <- function(.file, .type){
         mutate(id = as.numeric(id)) %>% 
         left_join(information, by = "id") %>% 
         select(-id) %>% 
-        filter(!is.na(votes) & !is.na(parties)) %>% 
+        #filter(!is.na(votes) & !is.na(parties)) %>% 
+        filter(parties != "得票数計") %>%
         mutate(votes = as.numeric(votes),
                file = .file, 
                prefecture = sheets[i])
